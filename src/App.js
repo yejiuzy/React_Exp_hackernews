@@ -1,24 +1,12 @@
 import React, {Component} from 'react';
 import './App.css';
 
-const list = [
-  {
-    title: 'React',
-    url: 'https://facebook.github.io/react/',
-    author: 'Jordan Walke',
-    num_comments: 3,
-    points: 4,
-    objectID: 0,
-  },
-  {
-    title: 'Redux',
-    url: 'https://github.com/reactjs/redux',
-    author: 'Dan Abramov, Andrew Clark',
-    num_comments: 2,
-    points: 5,
-    objectID: 1,
-  }
-];
+// 网络请求
+const DEFAULT_QUERY = 'redux';
+
+const PATH_BASE = 'https://hn.algolia.com/api/v1/';
+const PATH_SEARCH = '/search';
+const PARAM_SEARCH = 'query=';
 
 function isSearched(searchTerm) {
   return function(item) {
@@ -30,24 +18,61 @@ class App extends Component {
   constructor(props){
     super(props);
     this.state = {
-      list,
-      searchTerm: '',
+      result: null,     // 空的列表结果
+      searchTerm: DEFAULT_QUERY,   // 默认搜索词
     }
+
+    // 类方法绑定
+    this.setSearchTopStories = this.setSearchTopStories.bind(this);
+    this.fetchSearchTopStories = this.fetchSearchTopStories.bind(this);
     this.onSearchChange = this.onSearchChange.bind(this);
     this.onDismiss = this.onDismiss.bind(this);
   };
+
+  // 将获取到的数据存到result里
+  setSearchTopStories(result) {
+    this.setState({result});
+  };
+
+  // 异步请求数据
+  fetchSearchTopStories(searchTerm) {
+    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}`)  // 模板字符串
+    .then(response => response.json())  // 转化成json格式的数据结构
+    .then(result => this.setSearchTopStories(result))  // 处理后的响应赋值给state中的结果
+    .catch(e => e);
+  };
+
+
+  // 数据变化更新状态
   onSearchChange(event) {
     this.setState({searchTerm: event.target.value,})
   };
+
+  // onDismiss键忽略项方法
   onDismiss(id) {
-    function isNotId(item) {
-      return item.objectID !== id;
-    }
-    const updatedList = this.state.list.filter(isNotId);
-    this.setState({list: updatedList})
+    const isNotId = item => item.objectID !== id;
+    const updateHits = this.state.result.hits.filter(isNotId);
+    this.setState({
+      // result: Object.assign({}, this.state.result, {hits: updateHits})
+      result: {...this.state.result, hits: updateHits}
+    })
   };
+
+  onSearchSubmit() {
+    const {searchTerm} = this.state;
+    this.fetchSearchTopStories(searchTerm);
+  };
+
+  // 生命周期函数（异步请求数据）
+  componentDidMount() {
+    const {searchTerm} = this.state;
+    this.fetchSearchTopStories(searchTerm);
+  }
+
   render() {
-    const {searchTerm, list} = this.state;
+    // console.log(this.state);
+    const {searchTerm, result} = this.state;
+    if(!result) return null;  // 通过返回null来不渲染任何东西
     return (
       <div className='page'>
         <div className='interactions'>
@@ -58,11 +83,16 @@ class App extends Component {
           Search
         </Search>
         </div>
-        <Table
-          list={list}
-          pattern={searchTerm}
-          onDismiss={this.onDismiss}
-        />
+        {
+          result
+          ? <Table 
+              list = {result.hits}
+              pattern = {searchTerm}
+              onDismiss = {this.onDismiss}
+            />
+          : null
+        }
+        
       </div>
     );
   }
@@ -99,6 +129,7 @@ const Table = ({list, pattern, onDismiss}) =>
         )}
       </div>
 
+// 按钮组件
 const Button = ({onClick, className = '', children}) => 
       <button
         onClick={onClick}
