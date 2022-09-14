@@ -8,12 +8,6 @@ const PATH_BASE = 'https://hn.algolia.com/api/v1/';
 const PATH_SEARCH = '/search';
 const PARAM_SEARCH = 'query=';
 
-function isSearched(searchTerm) {
-  return function(item) {
-    return item.title.toLowerCase().includes(searchTerm.toLowerCase());
-  }
-}
-
 class App extends Component {
   constructor(props){
     super(props);
@@ -27,6 +21,7 @@ class App extends Component {
     this.fetchSearchTopStories = this.fetchSearchTopStories.bind(this);
     this.onSearchChange = this.onSearchChange.bind(this);
     this.onDismiss = this.onDismiss.bind(this);
+    this.onSearchSubmit = this.onSearchSubmit.bind(this);
   };
 
   // 将获取到的数据存到result里
@@ -69,6 +64,8 @@ class App extends Component {
     this.fetchSearchTopStories(searchTerm);
   }
 
+
+  // 渲染函数
   render() {
     // console.log(this.state);
     const {searchTerm, result} = this.state;
@@ -78,16 +75,16 @@ class App extends Component {
         <div className='interactions'>
         <Search 
           value={searchTerm}
-          onChange={this.onSearchChange} 
+          onChange={this.onSearchChange}
+          onSubmit = {this.onSearchSubmit}
         >
-          Search
+        Search
         </Search>
         </div>
         {
           result
           ? <Table 
               list = {result.hits}
-              pattern = {searchTerm}
               onDismiss = {this.onDismiss}
             />
           : null
@@ -99,20 +96,22 @@ class App extends Component {
 }
 
 // 搜索组件
-const Search = ({value, onChange, children}) => 
-      <form>
-        {children}
+const Search = ({value, onChange, onSubmit}) => 
+      <form onSubmit={onSubmit}>
         <input
           type="text"
           value={value}
           onChange={onChange}
         />
+        <button type="button">
+        search
+        </button>
       </form>
 
 // Table组件
-const Table = ({list, pattern, onDismiss}) => 
+const Table = ({list, onDismiss}) => 
       <div className='table'>
-        {list.filter(isSearched(pattern)).map(item =>
+        {list.map(item =>
           <div key={item.objectID} className='table-row'>
             <span style={{width: '40%'}}>
               <a href={item.url}>{item.title}</a>
@@ -138,5 +137,4 @@ const Button = ({onClick, className = '', children}) =>
       >
         {children}
       </button>
-
 export default App;
