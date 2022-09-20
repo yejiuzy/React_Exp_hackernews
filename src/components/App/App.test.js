@@ -1,4 +1,3 @@
-import { render, screen } from '@testing-library/react';
 import ReactDOM from 'react-dom';
 import App from '.';
 import renderer from 'react-test-renderer';
@@ -56,7 +55,9 @@ describe('Table', () => {
     list: [
       {title: '1', author: '1', num_comments: '1', points: 1, objectID: 'y'},
       {title: '2', author: '2', num_comments: '2', points: 2, objectID: 'z'},
-    ]
+    ],
+    sortKey: 'TITLE',
+    isSortReverse: false,
   }
   it('renders without crashing', () => {
     const div = document.createElement('div');

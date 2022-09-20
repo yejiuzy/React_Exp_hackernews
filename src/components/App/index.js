@@ -25,7 +25,6 @@ class App extends Component {
       searchTerm: DEFAULT_QUERY,   // 默认搜索词
       error: null,
       isLoading: false,
-      sortKey: 'NONE',
     }
 
     // 类方法绑定
@@ -35,7 +34,6 @@ class App extends Component {
     this.onDismiss = this.onDismiss.bind(this);
     this.onSearchSubmit = this.onSearchSubmit.bind(this);
     this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this);
-    this.onSort = this.onSort.bind(this);
   };
 
   // 将获取到的数据存到result里
@@ -102,11 +100,6 @@ class App extends Component {
     return !this.state.results[searchTerm];
   };
 
-  // 排序关键字
-  onSort(sortKey) {
-    this.setState({sortKey});
-  }
-
   // 生命周期函数（异步请求数据）
   componentDidMount() {
     const {searchTerm} = this.state;
@@ -118,7 +111,7 @@ class App extends Component {
   // 渲染函数
   render() {
     // console.log(this.state);
-    const {searchTerm, results, searchKey, error, isLoading, sortKey} = this.state;
+    const {searchTerm, results, searchKey, error, isLoading, sortKey, isSortReverse} = this.state;
     const page = (results && results[searchKey] && results[searchKey].page) || 0;   // 默认分页为0
     const list = (results && results[searchKey] && results[searchKey].hits) || [];
     // if(!) return null;  // 通过返回null来不渲染任何东西
@@ -144,8 +137,6 @@ class App extends Component {
           : <Table
               list = {list}
               onDismiss = {this.onDismiss}
-              sortKey = {sortKey}
-              onSort = {this.onSort}
             />
         }
         <div className='interactions'>
