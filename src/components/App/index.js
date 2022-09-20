@@ -3,6 +3,7 @@ import './index.css';
 import Search from '../Search';
 import Table from '../Table';
 import Button from '../Button';
+
 import {
   DEFAULT_QUERY,
   DEFAULT_HPP,
@@ -13,6 +14,8 @@ import {
   PARAM_HPP
 } from '../../constants';
 
+
+
 class App extends Component {
   constructor(props){
     super(props);
@@ -21,6 +24,8 @@ class App extends Component {
       searchKey: '',
       searchTerm: DEFAULT_QUERY,   // 默认搜索词
       error: null,
+      isLoading: false,
+      sortKey: 'NONE',
     }
 
     // 类方法绑定
@@ -30,6 +35,7 @@ class App extends Component {
     this.onDismiss = this.onDismiss.bind(this);
     this.onSearchSubmit = this.onSearchSubmit.bind(this);
     this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this);
+    this.onSort = this.onSort.bind(this);
   };
 
   // 将获取到的数据存到result里
@@ -49,12 +55,14 @@ class App extends Component {
       results: {
         ...results,
         [searchKey]: {hits: updateHits, page}
-      }
+      },
+      isLoading: false,
     })
   };
 
   // 异步请求数据
   fetchSearchTopStories(searchTerm, page = 0) {
+    this.setState({isLoading: true});
     fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${page}&${PARAM_HPP}${DEFAULT_HPP}`)  // 模板字符串
     .then(response => response.json())  // 转化成json格式的数据结构
     .then(result => this.setSearchTopStories(result))  // 处理后的响应赋值给state中的结果
@@ -94,6 +102,11 @@ class App extends Component {
     return !this.state.results[searchTerm];
   };
 
+  // 排序关键字
+  onSort(sortKey) {
+    this.setState({sortKey});
+  }
+
   // 生命周期函数（异步请求数据）
   componentDidMount() {
     const {searchTerm} = this.state;
@@ -105,7 +118,7 @@ class App extends Component {
   // 渲染函数
   render() {
     // console.log(this.state);
-    const {searchTerm, results, searchKey, error} = this.state;
+    const {searchTerm, results, searchKey, error, isLoading, sortKey} = this.state;
     const page = (results && results[searchKey] && results[searchKey].page) || 0;   // 默认分页为0
     const list = (results && results[searchKey] && results[searchKey].hits) || [];
     // if(!) return null;  // 通过返回null来不渲染任何东西
@@ -128,17 +141,41 @@ class App extends Component {
           ? <div className='interactions'>
               <p>Something went wrong.</p>
           </div>
-          : <Table list = {list} onDismiss = {this.onDismiss}/>
+          : <Table
+              list = {list}
+              onDismiss = {this.onDismiss}
+              sortKey = {sortKey}
+              onSort = {this.onSort}
+            />
         }
         <div className='interactions'>
-          <Button onClick={() => this.fetchSearchTopStories(searchKey, page + 1)}>
-          More
-          </Button>
+          <ButtonwithLoading
+            isLoading={isLoading}
+            onClick = {() => this.fetchSearchTopStories(searchKey, page + 1)}>
+              More
+            </ButtonwithLoading>
         </div>
       </div>
     );
   }
 }
+
+const Loading = () => {
+  <div>Loading...</div>
+}
+
+// const withFoo = (Component) => (props) => {
+//   <Component {...props} />
+// }
+
+const withLoading = (Component) => ({isLoading, ...rest}) => {
+  isLoading
+  ? <Loading />
+  : <Component {...rest} />
+}
+
+const ButtonwithLoading = withLoading(Button);
+
 export default App;
 export {
   Button,
